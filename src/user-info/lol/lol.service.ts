@@ -34,7 +34,30 @@ export class LolService {
 
     const matchListData = [];
     for (const matchId of matchList) {
-      const match = await this.getMatchFromMatchId(matchId, summonerRegion);
+      const RiotMatch = await this.getMatchFromMatchId(matchId, summonerRegion);
+      const RiotMatchInfo = RiotMatch.info;
+      const summonerMatchInfo = RiotMatchInfo.participants.find(
+        (participant) => participant.puuid === accountInfo.puuid,
+      );
+      const match = {
+        gameDuration: RiotMatchInfo.gameDuration,
+        champion: summonerMatchInfo.championName,
+        win: summonerMatchInfo.win,
+        kda: summonerMatchInfo.challenges.kda,
+        kills: summonerMatchInfo.kills,
+        deaths: summonerMatchInfo.deaths,
+        assists: summonerMatchInfo.assists,
+        minions: summonerMatchInfo.totalMinionsKilled,
+        avgVision: summonerMatchInfo.challenges.visionScorePerMinute,
+        csPerMinute:
+          summonerMatchInfo.totalMinionsKilled /
+          (RiotMatchInfo.gameDuration / 60),
+        summoners: [
+          getSummonerSpellNameFromId(summonerMatchInfo.summoner1Id),
+          getSummonerSpellNameFromId(summonerMatchInfo.summoner2Id),
+        ],
+      };
+
       matchListData.push(match);
     }
 
@@ -140,4 +163,21 @@ export class LolService {
         return 'Unknown';
     }
   }
+}
+
+function getSummonerSpellNameFromId(id: number) {
+  const summonerSpellsRelations = {
+    21: 'Barrier',
+    1: 'Cleanse',
+    3: 'Exhaust',
+    4: 'Flash',
+    6: 'Ghost',
+    7: 'Heal',
+    14: 'Ignite',
+    32: 'Mark (Nexus Blitz exclusive)',
+    31: 'Poro Toss (ARAM exclusive)',
+    11: 'Smite',
+    12: 'Teleport',
+  };
+  return summonerSpellsRelations[id];
 }

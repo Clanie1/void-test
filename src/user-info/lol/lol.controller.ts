@@ -1,17 +1,26 @@
-import { Controller, Get, Inject } from '@nestjs/common';
+import { Body, Controller, Get, Inject, Param } from '@nestjs/common';
 import { LolService } from './lol.service';
 
 @Controller('lol')
 export class LolController {
   constructor(private lolService: LolService) {}
 
-  @Get('/recent-match-list')
-  getAccountMatchList(): Promise<string[]> {
-    return this.lolService.getAccountRecentMatches('clanie1', 'la1');
+  @Get('/recent-matches/:summonerName/:summonerPlatform')
+  getAccountMatchList(
+    @Param('summonerName') summonerName: string,
+    @Param('summonerPlatform') summonerPlatform: string,
+  ): Promise<string[]> {
+    return this.lolService.getAccountRecentMatches(
+      summonerName,
+      summonerPlatform,
+    );
   }
 
-  @Get('/player-summary')
-  getPlayerSummary(): any {
-    return this.lolService.getPlayerSummary('COOKIEMONSTER123', 'na1');
+  @Get('/player-summary/:summonerName/:summonerPlatform')
+  getPlayerSummary(
+    @Param('summonerName') summonerName: string,
+    @Param('summonerPlatform') summonerPlatform: string,
+  ): any {
+    return this.lolService.getPlayerSummary(summonerName, summonerPlatform);
   }
 }
