@@ -1,9 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import axios, { Axios, AxiosInstance } from 'axios';
+import axios, { AxiosInstance } from 'axios';
 import { RiotRankProfile, RiotUser } from './dto/lol.dto';
-import { match } from 'assert';
-import { on } from 'events';
 
+const ALLQUEUEID = 0;
 @Injectable()
 export class LolService {
   private readonly riotAxios: AxiosInstance;
@@ -19,6 +18,9 @@ export class LolService {
   async getAccountRecentMatches(
     summonerName: string,
     summonerPlatform: string,
+    page: number,
+    limit: number,
+    queueId: number,
   ): Promise<string[]> {
     const accountInfo = await this.getAccountFromSummoner(
       summonerName,
@@ -27,9 +29,14 @@ export class LolService {
     const summonerRegion = this.getRegionFromPlatform(summonerPlatform);
     const accountID = accountInfo.puuid;
 
+    const startingMatchIndex = limit * (page - 1);
+    const endingMatchIndex = limit * page;
     const matchList = await this.getMatchListFromAccountId(
       accountID,
       summonerRegion,
+      startingMatchIndex,
+      endingMatchIndex,
+      queueId,
     );
 
     const matchListData = [];
@@ -39,6 +46,7 @@ export class LolService {
       const summonerMatchInfo = RiotMatchInfo.participants.find(
         (participant) => participant.puuid === accountInfo.puuid,
       );
+      const totalMinutes = RiotMatchInfo.gameDuration / 60;
       const match = {
         gameDuration: RiotMatchInfo.gameDuration,
         champion: summonerMatchInfo.championName,
@@ -49,22 +57,23 @@ export class LolService {
         assists: summonerMatchInfo.assists,
         minions: summonerMatchInfo.totalMinionsKilled,
         avgVision: summonerMatchInfo.challenges.visionScorePerMinute,
-        csPerMinute:
-          summonerMatchInfo.totalMinionsKilled /
-          (RiotMatchInfo.gameDuration / 60),
+        csPerMinute: summonerMatchInfo.totalMinionsKilled / totalMinutes,
         summoners: [
-          getSummonerSpellNameFromId(summonerMatchInfo.summoner1Id),
-          getSummonerSpellNameFromId(summonerMatchInfo.summoner2Id),
+          this.getSummonerSpellNameFromId(summonerMatchInfo.summoner1Id),
+          this.getSummonerSpellNameFromId(summonerMatchInfo.summoner2Id),
         ],
       };
 
       matchListData.push(match);
     }
-
     return matchListData;
   }
 
-  async getPlayerSummary(summonerName: string, summonerPlatform: string) {
+  async getPlayerSummary(
+    summonerName: string,
+    summonerPlatform: string,
+    queueId: number,
+  ): Promise<any> {
     const accountInfo = await this.getAccountFromSummoner(
       summonerName,
       summonerPlatform,
@@ -76,20 +85,48 @@ export class LolService {
       summonerPlatform,
     );
 
+    //*-*
+    const matchList = await this.getAccountRecentMatches(
+      summonerName,
+      summonerPlatform,
+      1,
+      5,
+      queueId,
+    );
+
+    const avgCsPerMinute = this.getAvgCSPerMinute(matchList);
+    const avgVisionScore = this.getAvgVisionScore(matchList);
+
     const playerSummary = {
       puuid: accountInfo.puuid,
       rank: {
-        title: summonerRank[0].tier + ' ' + summonerRank[0].rank,
+        name: summonerRank[0].tier + ' ' + summonerRank[0].rank,
         img: '',
       },
       leaguePoints: summonerRank[0].leaguePoints,
       wins: summonerRank[0].wins,
       losses: summonerRank[0].losses,
-      avgCsPerMinute: 0,
-      avgVisionScore: 0,
+      avgCsPerMinute: avgCsPerMinute,
+      avgVisionScore: avgVisionScore,
     };
 
     return playerSummary;
+  }
+
+  getAvgCSPerMinute(matchList) {
+    let totalCSPerMinute = 0;
+    for (const match of matchList) {
+      totalCSPerMinute += match.csPerMinute;
+    }
+    return totalCSPerMinute / matchList.length;
+  }
+
+  getAvgVisionScore(matchList) {
+    let totalVisionScore = 0;
+    for (const match of matchList) {
+      totalVisionScore += match.avgVision;
+    }
+    return totalVisionScore / matchList.length;
   }
 
   async getLastDdragonVersion() {
@@ -129,9 +166,17 @@ export class LolService {
   async getMatchListFromAccountId(
     accountId: string,
     summonerRegion: string,
+    startingMatchIndex: number,
+    endingMatchIndex: number,
+    queueId: number = 0,
   ): Promise<string[]> {
+    let queueStr = '';
+    if (queueId != 0) {
+      queueStr = `&queue=${queueId}`;
+    }
+
     const matchList = await this.riotAxios.get(
-      `https://${summonerRegion}.api.riotgames.com/lol/match/v5/matches/by-puuid/${accountId}/ids?start=0&count=4`,
+      `https://${summonerRegion}.api.riotgames.com/lol/match/v5/matches/by-puuid/${accountId}/ids?start=${startingMatchIndex}&count=${endingMatchIndex}${queueStr}`,
     );
     return matchList.data;
   }
@@ -163,21 +208,20 @@ export class LolService {
         return 'Unknown';
     }
   }
-}
-
-function getSummonerSpellNameFromId(id: number) {
-  const summonerSpellsRelations = {
-    21: 'Barrier',
-    1: 'Cleanse',
-    3: 'Exhaust',
-    4: 'Flash',
-    6: 'Ghost',
-    7: 'Heal',
-    14: 'Ignite',
-    32: 'Mark (Nexus Blitz exclusive)',
-    31: 'Poro Toss (ARAM exclusive)',
-    11: 'Smite',
-    12: 'Teleport',
-  };
-  return summonerSpellsRelations[id];
+  getSummonerSpellNameFromId(id: number) {
+    const summonerSpellsRelations = {
+      21: 'Barrier',
+      1: 'Cleanse',
+      3: 'Exhaust',
+      4: 'Flash',
+      6: 'Ghost',
+      7: 'Heal',
+      14: 'Ignite',
+      32: 'Mark (Nexus Blitz exclusive)',
+      31: 'Poro Toss (ARAM exclusive)',
+      11: 'Smite',
+      12: 'Teleport',
+    };
+    return summonerSpellsRelations[id];
+  }
 }
