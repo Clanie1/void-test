@@ -6,7 +6,7 @@ export class LolController {
   constructor(private lolService: LolService) {}
 
   @Get('/match-list')
-  getAccountMatchList(): Promise<string> {
+  getAccountMatchList(): Promise<string[]> {
     return this.lolService.getAccountRecentMatches('clanie1', 'la1');
   }
 }

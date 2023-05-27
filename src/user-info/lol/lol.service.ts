@@ -1,6 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import axios, { Axios, AxiosInstance } from 'axios';
 import { RiotUser } from './dto/lol.dto';
+import { match } from 'assert';
+import { on } from 'events';
 
 @Injectable()
 export class LolService {
@@ -14,7 +16,15 @@ export class LolService {
     });
   }
 
-  async getAccountIdFromSummonerName(
+  async getMatchFromMatchId(matchId: string, summonerRegion: string) {
+    const match = await this.riotAxios.get(
+      `https://${summonerRegion}.api.riotgames.com/lol/match/v5/matches/${matchId}`,
+    );
+    console.log(match.data);
+    return match.data;
+  }
+
+  async getAccountFromSummoner(
     summonerName: string,
     summonerRegion: string,
   ): Promise<RiotUser> {
@@ -27,27 +37,63 @@ export class LolService {
   async getMatchListFromAccountId(
     accountId: string,
     summonerRegion: string,
-  ): Promise<string> {
+  ): Promise<string[]> {
     const matchList = await this.riotAxios.get(
-      `https://americas.api.riotgames.com/lol/match/v5/matches/by-puuid/${accountId}/ids`,
+      `https://${summonerRegion}.api.riotgames.com/lol/match/v5/matches/by-puuid/${accountId}/ids?start=0&count=4`,
     );
     return matchList.data;
   }
 
   async getAccountRecentMatches(
     summonerName: string,
-    summonerRegion: string,
-  ): Promise<string> {
-    const accountInfo = await this.getAccountIdFromSummonerName(
+    summonerPlatform: string,
+  ): Promise<string[]> {
+    const accountInfo = await this.getAccountFromSummoner(
       summonerName,
-      summonerRegion,
+      summonerPlatform,
     );
-    const accountID = accountInfo.accountId;
+    const summonerRegion = this.getRegionFromPlatform(summonerPlatform);
+    const accountID = accountInfo.puuid;
 
     const matchList = await this.getMatchListFromAccountId(
       accountID,
       summonerRegion,
     );
-    return matchList;
+
+    const matchListData = [];
+    for (const matchId of matchList) {
+      const match = await this.getMatchFromMatchId(matchId, summonerRegion);
+      matchListData.push(match);
+    }
+
+    return matchListData;
+  }
+
+  getRegionFromPlatform(platform: string): string {
+    const upperPlatform = platform.toUpperCase();
+    switch (upperPlatform) {
+      case 'BR1':
+      case 'LA1':
+      case 'LA2':
+      case 'NA1':
+        return 'AMERICAS';
+      case 'EUN1':
+      case 'EUW1':
+      case 'RU':
+      case 'TR1':
+        return 'EUROPE';
+      case 'KR':
+      case 'JP1':
+        return 'ASIA';
+      case 'OC1':
+      case 'PH2':
+      case 'SG2':
+      case 'TH2':
+      case 'TW2':
+      case 'VN2':
+        return 'SEA';
+      default:
+        return 'Unknown';
+    }
   }
 }
