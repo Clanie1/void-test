@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import 'reflect-metadata';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { UserInfoModule } from './user-info/user-info.module';
+import { UserInfoModule } from './modules/user-info/user-info.module';
 
 @Module({
   imports: [
