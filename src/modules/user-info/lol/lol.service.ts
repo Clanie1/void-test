@@ -96,14 +96,18 @@ export class LolService {
       summonerID,
       summonerPlatform,
     );
+    const summonerPuuid = accountInfo.puuid;
+    const summonerRegion = this.getRegionFromPlatform(summonerPlatform);
     const defaultPaginationForProfileSummary = [1, 5];
-    const matchList = await this.getAccountRecentMatches(
-      summonerName,
-      summonerPlatform,
+
+    const matchList = await this.getMatchListFromAccountId(
+      summonerPuuid,
+      summonerRegion,
       defaultPaginationForProfileSummary[0],
       defaultPaginationForProfileSummary[1],
       queueId,
     );
+
     const avgCsPerMinute = this.getAvgCSPerMinute(matchList);
     const avgVisionScore = this.getAvgVisionScore(matchList);
 
