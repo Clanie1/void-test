@@ -19,7 +19,7 @@ export class LolService {
   constructor() {
     this.riotAxios = axios.create({
       headers: {
-        'X-Riot-Token': 'RGAPI-7aa91717-0b3f-441b-939f-94fa48ebf65b',
+        'X-Riot-Token': 'RGAPI-a545ee70-1b59-4f13-a87d-56be79cfa97a',
       },
     });
   }
