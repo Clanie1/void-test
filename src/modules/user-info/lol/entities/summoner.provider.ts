@@ -1,10 +1,11 @@
 import { DataSource } from 'typeorm';
-import { Summoner } from './summoner.entity';
+import { SummonerRankRecord } from './summonerRankRecord.entity';
 
 export const summonerProviders = [
   {
     provide: 'SUMMONER_REPOSITORY',
-    useFactory: (dataSource: DataSource) => dataSource.getRepository(Summoner),
+    useFactory: (dataSource: DataSource) =>
+      dataSource.getRepository(SummonerRankRecord),
     inject: ['DATA_SOURCE'],
   },
 ];

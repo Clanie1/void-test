@@ -10,7 +10,7 @@ import {
 } from './types/lol.internal-types';
 import { PlayerSummary, Match } from './types/lol.network-types';
 import { Repository } from 'typeorm';
-import { Summoner } from './entities/summoner.entity';
+import { SummonerRankRecord } from './entities/summonerRankRecord.entity';
 // import { SummonerSpell } from './types/lol.internal-types';
 
 const ALLQUEUEID = 0;
@@ -19,7 +19,7 @@ export class LolService {
   private readonly riotAxios: AxiosInstance;
   constructor(
     @Inject('SUMMONER_REPOSITORY')
-    private summonerRepository: Repository<Summoner>,
+    private summonerRepository: Repository<SummonerRankRecord>,
   ) {
     this.riotAxios = axios.create({
       headers: {
@@ -130,10 +130,6 @@ export class LolService {
       summonerRanksFiltered.push(playerSummary);
     }
     return summonerRanksFiltered;
-  }
-
-  async insertSummoner(summoner: Summoner) {
-    return await this.summonerRepository.insert([summoner]);
   }
 
   getAvgCSPerMinute(matchList): number {
