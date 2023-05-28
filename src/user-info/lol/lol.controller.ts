@@ -8,6 +8,8 @@ import {
   Query,
 } from '@nestjs/common';
 import { LolService } from './lol.service';
+import { Platform, QueueId } from './types/lol.internal-types';
+import { Match, PlayerSummary } from './types/lol.network-types';
 
 @Controller('lol')
 export class LolController {
@@ -16,11 +18,11 @@ export class LolController {
   @Get('/recent-matches/:summonerName/:summonerPlatform')
   getAccountMatchList(
     @Param('summonerName') summonerName: string,
-    @Param('summonerPlatform') summonerPlatform: string,
+    @Param('summonerPlatform') summonerPlatform: Platform,
     @Query('page') page: number,
     @Query('limit') limit: number,
-    @Query('queueId') queueId: number,
-  ): Promise<string[]> {
+    @Query('queueId') queueId: QueueId,
+  ): Promise<Match[]> {
     return this.lolService.getAccountRecentMatches(
       summonerName,
       summonerPlatform,
@@ -33,9 +35,9 @@ export class LolController {
   @Get('/player-summary/:summonerName/:summonerPlatform')
   getPlayerSummary(
     @Param('summonerName') summonerName: string,
-    @Param('summonerPlatform') summonerPlatform: string,
-    @Query('queueId') queueId: number,
-  ): any {
+    @Param('summonerPlatform') summonerPlatform: Platform,
+    @Query('queueId') queueId: QueueId,
+  ): Promise<PlayerSummary> {
     return this.lolService.getPlayerSummary(
       summonerName,
       summonerPlatform,

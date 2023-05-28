@@ -1,6 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import axios, { AxiosInstance } from 'axios';
 import { RiotRankProfile, RiotUser } from './dto/lol.dto';
+import {
+  Platform,
+  Region,
+  SummonerSpell,
+  SummonerSpellName,
+  SummonerSpellID,
+} from './types/lol.internal-types';
+import { PlayerSummary, Match } from './types/lol.network-types';
+// import { SummonerSpell } from './types/lol.internal-types';
 
 const ALLQUEUEID = 0;
 @Injectable()
@@ -17,11 +26,11 @@ export class LolService {
 
   async getAccountRecentMatches(
     summonerName: string,
-    summonerPlatform: string,
+    summonerPlatform: Platform,
     page: number,
     limit: number,
     queueId: number,
-  ): Promise<string[]> {
+  ): Promise<Match[]> {
     const accountInfo = await this.getAccountFromSummoner(
       summonerName,
       summonerPlatform,
@@ -71,9 +80,9 @@ export class LolService {
 
   async getPlayerSummary(
     summonerName: string,
-    summonerPlatform: string,
+    summonerPlatform: Platform,
     queueId: number,
-  ): Promise<any> {
+  ): Promise<PlayerSummary> {
     const accountInfo = await this.getAccountFromSummoner(
       summonerName,
       summonerPlatform,
@@ -84,13 +93,13 @@ export class LolService {
       summonerID,
       summonerPlatform,
     );
-
-    //*-*
+    console.log(summonerRank);
+    const defaultPaginationForProfileSummary = [1, 5];
     const matchList = await this.getAccountRecentMatches(
       summonerName,
       summonerPlatform,
-      1,
-      5,
+      defaultPaginationForProfileSummary[0],
+      defaultPaginationForProfileSummary[1],
       queueId,
     );
 
@@ -100,7 +109,8 @@ export class LolService {
     const playerSummary = {
       puuid: accountInfo.puuid,
       rank: {
-        name: summonerRank[0].tier + ' ' + summonerRank[0].rank,
+        tier: summonerRank[0].tier,
+        rank: summonerRank[0].rank,
         img: '',
       },
       leaguePoints: summonerRank[0].leaguePoints,
@@ -113,7 +123,7 @@ export class LolService {
     return playerSummary;
   }
 
-  getAvgCSPerMinute(matchList) {
+  getAvgCSPerMinute(matchList): number {
     let totalCSPerMinute = 0;
     for (const match of matchList) {
       totalCSPerMinute += match.csPerMinute;
@@ -121,7 +131,7 @@ export class LolService {
     return totalCSPerMinute / matchList.length;
   }
 
-  getAvgVisionScore(matchList) {
+  getAvgVisionScore(matchList): number {
     let totalVisionScore = 0;
     for (const match of matchList) {
       totalVisionScore += match.avgVision;
@@ -129,12 +139,12 @@ export class LolService {
     return totalVisionScore / matchList.length;
   }
 
-  async getLastDdragonVersion() {
-    const ddragonVersion = await this.riotAxios.get(
-      `https://ddragon.leagueoflegends.com/api/versions.json`,
-    );
-    return ddragonVersion.data[0];
-  }
+  // async getLastDdragonVersion() {
+  //   const ddragonVersion = await this.riotAxios.get(
+  //     `https://ddragon.leagueoflegends.com/api/versions.json`,
+  //   );
+  //   return ddragonVersion.data[0];
+  // }
 
   async getSommonerRankFromSummonerID(
     summonerID,
@@ -181,7 +191,7 @@ export class LolService {
     return matchList.data;
   }
 
-  getRegionFromPlatform(platform: string): string {
+  getRegionFromPlatform(platform: Platform): Region {
     const upperPlatform = platform.toUpperCase();
     switch (upperPlatform) {
       case 'BR1':
@@ -208,20 +218,32 @@ export class LolService {
         return 'Unknown';
     }
   }
-  getSummonerSpellNameFromId(id: number) {
-    const summonerSpellsRelations = {
-      21: 'Barrier',
-      1: 'Cleanse',
-      3: 'Exhaust',
-      4: 'Flash',
-      6: 'Ghost',
-      7: 'Heal',
-      14: 'Ignite',
-      32: 'Mark (Nexus Blitz exclusive)',
-      31: 'Poro Toss (ARAM exclusive)',
-      11: 'Smite',
-      12: 'Teleport',
-    };
-    return summonerSpellsRelations[id];
+  getSummonerSpellNameFromId(summonerId: SummonerSpellID): SummonerSpellName {
+    switch (summonerId) {
+      case SummonerSpell.Barrier:
+        return 'Barrier';
+      case SummonerSpell.Cleanse:
+        return 'Cleanse';
+      case SummonerSpell.Exhaust:
+        return 'Exhaust';
+      case SummonerSpell.Flash:
+        return 'Flash';
+      case SummonerSpell.Ghost:
+        return 'Ghost';
+      case SummonerSpell.Heal:
+        return 'Heal';
+      case SummonerSpell.Ignite:
+        return 'Ignite';
+      case SummonerSpell.Mark:
+        return 'Mark';
+      case SummonerSpell.PoroToss:
+        return 'PoroToss';
+      case SummonerSpell.Smite:
+        return 'Smite';
+      case SummonerSpell.Teleport:
+        return 'Teleport';
+      default:
+        return 'Unknown';
+    }
   }
 }
