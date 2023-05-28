@@ -1,3 +1,4 @@
+import { Rank, Tier } from '../types/lol.internal-types';
 export class RiotUser {
   id: string;
   accountId: string;
@@ -11,8 +12,8 @@ export class RiotUser {
 export class RiotRankProfile {
   legueId: string;
   queueType: string;
-  tier: string;
-  rank: string;
+  tier: Tier;
+  rank: Rank;
   summonerId: string;
   summonerName: string;
   leaguePoints: number;

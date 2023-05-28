@@ -37,7 +37,7 @@ export class LolController {
     @Param('summonerName') summonerName: string,
     @Param('summonerPlatform') summonerPlatform: Platform,
     @Query('queueId') queueId: QueueId,
-  ): Promise<PlayerSummary> {
+  ): Promise<PlayerSummary[]> {
     return this.lolService.getPlayerSummary(
       summonerName,
       summonerPlatform,

@@ -2,6 +2,7 @@ import { Tier, Rank, SummonerSpellName } from './lol.internal-types';
 
 export type PlayerSummary = {
   puuid: string;
+  queueType: string;
   rank: {
     tier: Tier;
     rank: Rank;

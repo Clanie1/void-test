@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
 import axios, { AxiosInstance } from 'axios';
 import { RiotRankProfile, RiotUser } from './dto/lol.dto';
 import {
@@ -9,14 +9,18 @@ import {
   SummonerSpellID,
 } from './types/lol.internal-types';
 import { PlayerSummary, Match } from './types/lol.network-types';
+import { Repository } from 'typeorm';
+import { Summoner } from './entities/summoner.entity';
 // import { SummonerSpell } from './types/lol.internal-types';
 
 const ALLQUEUEID = 0;
 @Injectable()
 export class LolService {
   private readonly riotAxios: AxiosInstance;
-
-  constructor() {
+  constructor(
+    @Inject('SUMMONER_REPOSITORY')
+    private summonerRepository: Repository<Summoner>,
+  ) {
     this.riotAxios = axios.create({
       headers: {
         'X-Riot-Token': 'RGAPI-a545ee70-1b59-4f13-a87d-56be79cfa97a',
@@ -82,18 +86,16 @@ export class LolService {
     summonerName: string,
     summonerPlatform: Platform,
     queueId: number,
-  ): Promise<PlayerSummary> {
+  ): Promise<PlayerSummary[]> {
     const accountInfo = await this.getAccountFromSummoner(
       summonerName,
       summonerPlatform,
     );
-
     const summonerID = accountInfo.id;
-    const summonerRank = await this.getSommonerRankFromSummonerID(
+    const summonerRanks = await this.getSommonerRankFromSummonerID(
       summonerID,
       summonerPlatform,
     );
-    console.log(summonerRank);
     const defaultPaginationForProfileSummary = [1, 5];
     const matchList = await this.getAccountRecentMatches(
       summonerName,
@@ -102,25 +104,32 @@ export class LolService {
       defaultPaginationForProfileSummary[1],
       queueId,
     );
-
     const avgCsPerMinute = this.getAvgCSPerMinute(matchList);
     const avgVisionScore = this.getAvgVisionScore(matchList);
 
-    const playerSummary = {
-      puuid: accountInfo.puuid,
-      rank: {
-        tier: summonerRank[0].tier,
-        rank: summonerRank[0].rank,
-        img: '',
-      },
-      leaguePoints: summonerRank[0].leaguePoints,
-      wins: summonerRank[0].wins,
-      losses: summonerRank[0].losses,
-      avgCsPerMinute: avgCsPerMinute,
-      avgVisionScore: avgVisionScore,
-    };
+    let summonerRanksFiltered = [];
+    for (const rankDetails of summonerRanks) {
+      const playerSummary: PlayerSummary = {
+        puuid: accountInfo.puuid,
+        queueType: rankDetails.queueType,
+        rank: {
+          tier: rankDetails.tier,
+          rank: rankDetails.rank,
+          img: '',
+        },
+        leaguePoints: rankDetails.leaguePoints,
+        wins: rankDetails.wins,
+        losses: rankDetails.losses,
+        avgCsPerMinute: avgCsPerMinute,
+        avgVisionScore: avgVisionScore,
+      };
+      summonerRanksFiltered.push(playerSummary);
+    }
+    return summonerRanksFiltered;
+  }
 
-    return playerSummary;
+  async insertSummoner(summoner: Summoner) {
+    return await this.summonerRepository.insert([summoner]);
   }
 
   getAvgCSPerMinute(matchList): number {
@@ -139,17 +148,10 @@ export class LolService {
     return totalVisionScore / matchList.length;
   }
 
-  // async getLastDdragonVersion() {
-  //   const ddragonVersion = await this.riotAxios.get(
-  //     `https://ddragon.leagueoflegends.com/api/versions.json`,
-  //   );
-  //   return ddragonVersion.data[0];
-  // }
-
   async getSommonerRankFromSummonerID(
     summonerID,
     summonerPlatform,
-  ): Promise<RiotRankProfile> {
+  ): Promise<RiotRankProfile[]> {
     const summonerRank = await this.riotAxios.get(
       `https://${summonerPlatform}.api.riotgames.com/lol/league/v4/entries/by-summoner/${summonerID}`,
     );
@@ -157,20 +159,28 @@ export class LolService {
   }
 
   async getMatchFromMatchId(matchId: string, summonerRegion: string) {
-    const match = await this.riotAxios.get(
-      `https://${summonerRegion}.api.riotgames.com/lol/match/v5/matches/${matchId}`,
-    );
-    return match.data;
+    try {
+      const match = await this.riotAxios.get(
+        `https://${summonerRegion}.api.riotgames.com/lol/match/v5/matches/${matchId}`,
+      );
+      return match.data;
+    } catch (e) {
+      throw new HttpException('Match not found', HttpStatus.BAD_REQUEST);
+    }
   }
 
   async getAccountFromSummoner(
     summonerName: string,
     summonerRegion: string,
   ): Promise<RiotUser> {
-    const accountID = await this.riotAxios.get(
-      `https://${summonerRegion}.api.riotgames.com/lol/summoner/v4/summoners/by-name/${summonerName}`,
-    );
-    return accountID.data;
+    try {
+      const accountID = await this.riotAxios.get(
+        `https://${summonerRegion}.api.riotgames.com/lol/summoner/v4/summoners/by-name/${summonerName}`,
+      );
+      return accountID.data;
+    } catch (e) {
+      throw new HttpException('Summoner not found', HttpStatus.BAD_REQUEST);
+    }
   }
 
   async getMatchListFromAccountId(
