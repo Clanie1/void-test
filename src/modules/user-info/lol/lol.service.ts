@@ -44,7 +44,7 @@ export class LolService {
 
     const startingMatchIndex = limit * (page - 1);
     const endingMatchIndex = limit * page;
-    const matchList = await this.getMatchListFromAccountId(
+    const matchIdList = await this.getMatchIdListFromAccountId(
       accountID,
       summonerRegion,
       startingMatchIndex,
@@ -53,7 +53,7 @@ export class LolService {
     );
 
     const matchListData = [];
-    for (const matchId of matchList) {
+    for (const matchId of matchIdList) {
       const RiotMatch = await this.getMatchFromMatchId(matchId, summonerRegion);
       const RiotMatchInfo = RiotMatch.info;
       const summonerMatchInfo = RiotMatchInfo.participants.find(
@@ -92,7 +92,7 @@ export class LolService {
       summonerPlatform,
     );
     const summonerID = accountInfo.id;
-    const summonerRanks = await this.getSommonerRankFromSummonerID(
+    const summonerRanks = await this.getSummonerRankFromSummonerID(
       summonerID,
       summonerPlatform,
     );
@@ -100,7 +100,7 @@ export class LolService {
     const summonerRegion = this.getRegionFromPlatform(summonerPlatform);
     const defaultPaginationForProfileSummary = [1, 5];
 
-    const matchList = await this.getMatchListFromAccountId(
+    const matchList = await this.getMatchIdListFromAccountId(
       summonerPuuid,
       summonerRegion,
       defaultPaginationForProfileSummary[0],
@@ -148,7 +148,7 @@ export class LolService {
     return totalVisionScore / matchList.length;
   }
 
-  async getSommonerRankFromSummonerID(
+  async getSummonerRankFromSummonerID(
     summonerID,
     summonerPlatform,
   ): Promise<RiotRankProfile[]> {
@@ -183,7 +183,7 @@ export class LolService {
     }
   }
 
-  async getMatchListFromAccountId(
+  async getMatchIdListFromAccountId(
     accountId: string,
     summonerRegion: string,
     startingMatchIndex: number,
