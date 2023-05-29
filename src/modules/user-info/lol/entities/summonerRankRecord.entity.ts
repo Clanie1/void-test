@@ -1,4 +1,5 @@
 import { Column, Entity, PrimaryColumn, PrimaryGeneratedColumn } from 'typeorm';
+import { Platform } from '../types/lol.internal-types';
 
 @Entity()
 export class SummonerRankRecord {
@@ -6,6 +7,8 @@ export class SummonerRankRecord {
   id: number;
   @Column()
   puuid: string;
+  @Column()
+  platform: Platform;
   @Column()
   username: string;
   @Column()
