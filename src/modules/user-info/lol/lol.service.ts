@@ -39,9 +39,9 @@ export class LolService {
       summonerName,
       summonerPlatform,
     );
+    this.handleSummonerRankRecordIntoDb(summonerName, summonerPlatform);
     const summonerRegion = this.getRegionFromPlatform(summonerPlatform);
     const accountID = accountInfo.puuid;
-
     const startingMatchIndex = limit * (page - 1);
     const endingMatchIndex = limit * page;
     const matchIdList = await this.getMatchIdListFromAccountId(
@@ -91,6 +91,7 @@ export class LolService {
       summonerName,
       summonerPlatform,
     );
+    this.handleSummonerRankRecordIntoDb(summonerName, summonerPlatform);
     const summonerID = accountInfo.id;
     const summonerRanks = await this.getSummonerRankFromSummonerID(
       summonerID,
@@ -130,6 +131,67 @@ export class LolService {
       summonerRanksFiltered.push(playerSummary);
     }
     return summonerRanksFiltered;
+  }
+
+  async handleSummonerRankRecordIntoDb(
+    summonerName: string,
+    summonerPlatform: Platform,
+  ) {
+    const region = this.getRegionFromPlatform(summonerPlatform);
+    const summonerInfo = await this.getAccountFromSummoner(
+      summonerName,
+      summonerPlatform,
+    );
+
+    const summonerID = summonerInfo.id;
+    const summonerPuuid = summonerInfo.puuid;
+    const summonerRanks = await this.getSummonerRankFromSummonerID(
+      summonerID,
+      summonerPlatform,
+    );
+    for (const rankDetails of summonerRanks) {
+      const summonerRankRecord = new SummonerRankRecord();
+      summonerRankRecord.puuid = summonerPuuid;
+      summonerRankRecord.username = summonerName;
+      summonerRankRecord.queueType = rankDetails.queueType;
+      summonerRankRecord.winrate =
+        rankDetails.wins / (rankDetails.wins + rankDetails.losses);
+      summonerRankRecord.leaguePoints = rankDetails.leaguePoints;
+      const exists = await this.getSummonerRankRecordExists(summonerRankRecord);
+      exists
+        ? this.updateSummonerRankRecord(exists)
+        : this.insertSummonerRankRecord(summonerRankRecord);
+      ``;
+    }
+  }
+  async updateSummonerRankRecord(summonerRankRecord: SummonerRankRecord) {
+    const summonerRankRecordEntity =
+      this.summonerRepository.create(summonerRankRecord);
+    const savedSummonerRankRecord = await this.summonerRepository.save(
+      summonerRankRecordEntity,
+    );
+  }
+
+  async getSummonerRankRecordExists(
+    summonerRankRecord: Partial<SummonerRankRecord>,
+  ): Promise<SummonerRankRecord> {
+    const summonerRankRecordExists = await this.summonerRepository.findOne({
+      where: {
+        puuid: summonerRankRecord.puuid,
+        queueType: summonerRankRecord.queueType,
+      },
+    });
+    return summonerRankRecordExists;
+  }
+
+  async insertSummonerRankRecord(
+    summonerRankRecord: Partial<SummonerRankRecord>,
+  ) {
+    const summonerRankRecordEntity =
+      this.summonerRepository.create(summonerRankRecord);
+    const savedSummonerRankRecord = await this.summonerRepository.save(
+      summonerRankRecordEntity,
+    );
   }
 
   getAvgCSPerMinute(matchList): number {
