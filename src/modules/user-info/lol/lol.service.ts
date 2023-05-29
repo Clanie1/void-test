@@ -133,6 +133,44 @@ export class LolService {
     return summonerRanksFiltered;
   }
 
+  async getPlayerRank(
+    summonerName: string,
+    summonerPlatform: Platform,
+  ): Promise<any> {
+    const DEFAULT_QUEUE_TYPE = 'RANKED_SOLO_5x5';
+    const leaderboardByLeaguePoints = await this.summonerRepository
+      .createQueryBuilder('record')
+      .where('record.queueType = :queueType', { queueType: DEFAULT_QUEUE_TYPE })
+      .andWhere('record.platform = :platform', { platform: summonerPlatform })
+      .orderBy('record.leaguePoints', 'DESC')
+      .getMany();
+
+    const leaderboardByWinrate = await this.summonerRepository
+      .createQueryBuilder('record')
+      .where('record.queueType = :queueType', { queueType: DEFAULT_QUEUE_TYPE })
+      .andWhere('record.platform = :platform', { platform: summonerPlatform })
+      .orderBy('record.winrate', 'DESC')
+      .getMany();
+
+    const byLeaguePointsPosition =
+      1 +
+      leaderboardByLeaguePoints.findIndex(
+        (summoner) => summoner.username === summonerName,
+      );
+    const byWinratePosition =
+      1 +
+      leaderboardByWinrate.findIndex(
+        (summoner) => summoner.username === summonerName,
+      );
+    if (byLeaguePointsPosition == 0 || byWinratePosition == 0) {
+      throw new HttpException('No summoner found', HttpStatus.BAD_REQUEST);
+    }
+    return {
+      leaguePoints: 'top: ' + byLeaguePointsPosition.toString(),
+      winRate: 'top: ' + byWinratePosition.toString(),
+    };
+  }
+
   async handleSummonerRankRecordIntoDb(
     summonerName: string,
     summonerPlatform: Platform,
@@ -154,6 +192,7 @@ export class LolService {
       summonerRankRecord.puuid = summonerPuuid;
       summonerRankRecord.username = summonerName;
       summonerRankRecord.queueType = rankDetails.queueType;
+      summonerRankRecord.platform = summonerPlatform;
       summonerRankRecord.winrate =
         rankDetails.wins / (rankDetails.wins + rankDetails.losses);
       summonerRankRecord.leaguePoints = rankDetails.leaguePoints;

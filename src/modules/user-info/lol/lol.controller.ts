@@ -44,4 +44,12 @@ export class LolController {
       queueId,
     );
   }
+
+  @Get('/summoner-rank/:summonerName/:summonerPlatform')
+  getPlayerRank(
+    @Param('summonerName') summonerName: string,
+    @Param('summonerPlatform') summonerPlatform: Platform,
+  ): Promise<any> {
+    return this.lolService.getPlayerRank(summonerName, summonerPlatform);
+  }
 }
