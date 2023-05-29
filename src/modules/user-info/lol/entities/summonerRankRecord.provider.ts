@@ -1,7 +1,7 @@
 import { DataSource } from 'typeorm';
 import { SummonerRankRecord } from './summonerRankRecord.entity';
 
-export const summonerProviders = [
+export const summonerRankRecordProviders = [
   {
     provide: 'SUMMONER_REPOSITORY',
     useFactory: (dataSource: DataSource) =>
