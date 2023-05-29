@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { CacheModule } from '@nestjs/cache-manager';
 import 'reflect-metadata';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserInfoModule } from './modules/user-info/user-info.module';
@@ -16,6 +17,7 @@ import { UserInfoModule } from './modules/user-info/user-info.module';
       synchronize: true,
     }),
     UserInfoModule,
+    CacheModule.register({ isGlobal: true }),
   ],
   controllers: [],
   providers: [],

@@ -2,15 +2,17 @@ import {
   Body,
   Controller,
   Get,
-  Inject,
   NotFoundException,
   Param,
   Query,
+  UseInterceptors,
 } from '@nestjs/common';
+import { CacheInterceptor } from '@nestjs/cache-manager';
 import { LolService } from './lol.service';
 import { Platform, QueueId } from './types/lol.internal-types';
 import { Match, PlayerSummary } from './types/lol.network-types';
 
+@UseInterceptors(CacheInterceptor)
 @Controller('lol')
 export class LolController {
   constructor(private lolService: LolService) {}
