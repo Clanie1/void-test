@@ -1,16 +1,20 @@
 import {
-  Body,
   Controller,
   Get,
-  NotFoundException,
   Param,
   Query,
+  Res,
   UseInterceptors,
 } from '@nestjs/common';
 import { CacheInterceptor } from '@nestjs/cache-manager';
 import { LolService } from './lol.service';
 import { Platform, QueueId } from './types/lol.internal-types';
 import { Match, PlayerSummary } from './types/lol.network-types';
+import { Response } from 'express';
+import * as fs from 'fs';
+import * as path from 'path';
+import { get } from 'http';
+import { of } from 'rxjs';
 
 @UseInterceptors(CacheInterceptor)
 @Controller('lol')
@@ -53,5 +57,17 @@ export class LolController {
     @Param('summonerPlatform') summonerPlatform: Platform,
   ): Promise<any> {
     return this.lolService.getPlayerRank(summonerName, summonerPlatform);
+  }
+
+  @Get('/rank-image/:tier')
+  getRankImage(@Param('tier') tier: string, @Res() res: Response) {
+    return of(
+      res.sendFile(
+        path.join(
+          process.cwd(),
+          'src/assets/img/lol/ranks/emblem-' + tier + '.png',
+        ),
+      ),
+    );
   }
 }

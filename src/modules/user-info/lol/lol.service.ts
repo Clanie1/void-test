@@ -11,7 +11,6 @@ import {
 import { PlayerSummary, Match } from './types/lol.network-types';
 import { Repository } from 'typeorm';
 import { SummonerRankRecord } from './entities/summonerRankRecord.entity';
-// import { SummonerSpell } from './types/lol.internal-types';
 
 const ALLQUEUEID = 0;
 @Injectable()
@@ -120,7 +119,9 @@ export class LolService {
         rank: {
           tier: rankDetails.tier,
           rank: rankDetails.rank,
-          img: '',
+          img:
+            'http://localhost:3000/lol/rank-image/' +
+            rankDetails.tier.toLowerCase(),
         },
         leaguePoints: rankDetails.leaguePoints,
         wins: rankDetails.wins,
