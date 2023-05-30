@@ -25,15 +25,17 @@ export class LolController {
   getAccountMatchList(
     @Param('summonerName') summonerName: string,
     @Param('summonerPlatform') summonerPlatform: Platform,
-    @Query('page') page: number,
-    @Query('limit') limit: number,
+    @Query('page') page: string,
+    @Query('limit') limit: string,
     @Query('queueId') queueId: QueueId,
   ): Promise<Match[]> {
+    const limitNumber = parseInt(limit);
+    const pageNumber = parseInt(page);
     return this.lolService.getAccountRecentMatches(
       summonerName,
       summonerPlatform,
-      page,
-      limit,
+      pageNumber,
+      limitNumber,
       queueId,
     );
   }

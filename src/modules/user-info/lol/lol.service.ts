@@ -42,12 +42,11 @@ export class LolService {
     const summonerRegion = this.getRegionFromPlatform(summonerPlatform);
     const accountID = accountInfo.puuid;
     const startingMatchIndex = limit * (page - 1);
-    const endingMatchIndex = limit * page;
     const matchIdList = await this.getMatchIdListFromAccountId(
       accountID,
       summonerRegion,
       startingMatchIndex,
-      endingMatchIndex,
+      limit,
       queueId,
     );
 
@@ -289,7 +288,7 @@ export class LolService {
     accountId: string,
     summonerRegion: string,
     startingMatchIndex: number,
-    endingMatchIndex: number,
+    limit: number,
     queueId: number = 0,
   ): Promise<string[]> {
     let queueStr = '';
@@ -298,7 +297,7 @@ export class LolService {
     }
 
     const matchList = await this.riotAxios.get(
-      `https://${summonerRegion}.api.riotgames.com/lol/match/v5/matches/by-puuid/${accountId}/ids?start=${startingMatchIndex}&count=${endingMatchIndex}${queueStr}`,
+      `https://${summonerRegion}.api.riotgames.com/lol/match/v5/matches/by-puuid/${accountId}/ids?start=${startingMatchIndex}&count=${limit}${queueStr}`,
     );
     return matchList.data;
   }
