@@ -1,73 +1,48 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="200" alt="Nest Logo" /></a>
-</p>
+This is my backend test overview for Void:
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+Postman collection:
+[Postman Collection](https://blue-resonance-754135.postman.co/workspace/Team-Workspace~1d1621fe-fc22-4b1d-83e0-d466924669fc/collection/27000041-c4cef10d-c1c3-498f-9570-4eab0db548f3?action=share&creator=27000041)
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+Instructions to run the project:
 
-## Description
+1. Clone the repository.
+2. Set your own RIOT_API_KEY as an environment variable.
+3. Run the yarn command.
+4. Start the Docker Compose container.
+5. Run `yarn start:dev`.
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+The project is an API with four endpoints that are connected to the Riot API. By using the Docker container, you can create a database instance that is automatically populated with tables created by TypeORM entities specified in the code.
 
-## Installation
+For the leaderboard endpoint, the "summoner_rank_record" table in the database stores relevant user information. If a user instance already exists, the information is updated. Table structure:
 
-```bash
-$ yarn install
-```
+`export class SummonerRankRecord {
+  @PrimaryGeneratedColumn()
+  id: number;
+  @Column()
+  puuid: string;
+  @Column()
+  platform: Platform;
+  @Column()
+  username: string;
+  @Column()
+  queueType: string;
+  @Column('decimal', { precision: 5, scale: 2 })
+  winrate: number;
+  @Column()
+  leaguePoints: number;
+}`
 
-## Running the app
 
-```bash
-# development
-$ yarn run start
+The API implements a simple caching technique where query results are stored in memory for 5 seconds. If the server receives the same request within that timeframe, the API returns the stored information.
 
-# watch mode
-$ yarn run start:dev
+The API also considers the queue type. The "player-summary" and "recent-matches" endpoints can be filtered using a query parameter that specifies the desired queue type. Available queue types are:
 
-# production mode
-$ yarn run start:prod
-```
+- RANKED_SOLO_5x5: 420
+- RANKED_FLEX_SR: 440
+- NORMAL_BLIND_PICK: 430
+- NORMAL_DRAFT_PICK: 400
+- ARAM: 450
+- ALL: 0
 
-## Test
+Lastly, the leaderboard endpoint compares player stats based on the "RANKED_SOLO_5X5" queue. However, the information for all queue types is stored in the database, allowing for easy modification in the future.
 
-```bash
-# unit tests
-$ yarn run test
-
-# e2e tests
-$ yarn run test:e2e
-
-# test coverage
-$ yarn run test:cov
-```
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://kamilmysliwiec.com)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](LICENSE).
