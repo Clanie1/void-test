@@ -13,8 +13,8 @@ export const databaseProviders = [
         password: 'void',
         database: 'void',
 
-        // entities: [__dirname + '/../**/*.entity{.ts,.js}'],
         entities: [join(__dirname, '**', '*.entity.{ts,js}')],
+
         synchronize: true,
       });
 

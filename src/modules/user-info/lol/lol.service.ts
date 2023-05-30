@@ -12,7 +12,6 @@ import { PlayerSummary, Match } from './types/lol.network-types';
 import { Repository } from 'typeorm';
 import { SummonerRankRecord } from './entities/summonerRankRecord.entity';
 
-const ALLQUEUEID = 0;
 @Injectable()
 export class LolService {
   private readonly riotAxios: AxiosInstance;
@@ -39,6 +38,7 @@ export class LolService {
       summonerPlatform,
     );
     this.handleSummonerRankRecordIntoDb(summonerName, summonerPlatform);
+
     const summonerRegion = this.getRegionFromPlatform(summonerPlatform);
     const accountID = accountInfo.puuid;
     const startingMatchIndex = limit * (page - 1);
@@ -57,6 +57,7 @@ export class LolService {
       const summonerMatchInfo = RiotMatchInfo.participants.find(
         (participant) => participant.puuid === accountInfo.puuid,
       );
+
       const totalMinutes = RiotMatchInfo.gameDuration / 60;
       const match = {
         gameDuration: RiotMatchInfo.gameDuration,
@@ -90,6 +91,7 @@ export class LolService {
       summonerPlatform,
     );
     this.handleSummonerRankRecordIntoDb(summonerName, summonerPlatform);
+
     const summonerID = accountInfo.id;
     const summonerRanks = await this.getSummonerRankFromSummonerID(
       summonerID,
@@ -107,15 +109,12 @@ export class LolService {
       queueId,
     );
 
-    const [avgCsPerMinute, avgVisionScore] = await this.getAvgCSPerMinute(
-      matchList,
-      summonerRegion,
-      summonerPuuid,
-    );
-    // const avgVisionScore = await this.getAvgVisionScore(
-    //   matchList,
-    //   summonerRegion,
-    // );
+    const [avgCsPerMinute, avgVisionScore] =
+      await this.getAvgCSPerMinuteVisionScore(
+        matchList,
+        summonerRegion,
+        summonerPuuid,
+      );
 
     let summonerRanksFiltered = [];
     for (const rankDetails of summonerRanks) {
@@ -135,6 +134,7 @@ export class LolService {
         avgCsPerMinute: avgCsPerMinute,
         avgVisionScore: avgVisionScore,
       };
+
       summonerRanksFiltered.push(playerSummary);
     }
     return summonerRanksFiltered;
@@ -196,6 +196,7 @@ export class LolService {
     );
     for (const rankDetails of summonerRanks) {
       const summonerRankRecord = new SummonerRankRecord();
+
       summonerRankRecord.puuid = summonerPuuid;
       summonerRankRecord.username = summonerName;
       summonerRankRecord.queueType = rankDetails.queueType;
@@ -203,7 +204,9 @@ export class LolService {
       summonerRankRecord.winrate =
         rankDetails.wins / (rankDetails.wins + rankDetails.losses);
       summonerRankRecord.leaguePoints = rankDetails.leaguePoints;
+
       const exists = await this.getSummonerRankRecordExists(summonerRankRecord);
+
       exists
         ? this.updateSummonerRankRecord(exists)
         : this.insertSummonerRankRecord(summonerRankRecord);
@@ -240,26 +243,31 @@ export class LolService {
     );
   }
 
-  async getAvgCSPerMinute(
+  async getAvgCSPerMinuteVisionScore(
     matchIdList,
     summonerRegion,
     summonerPuuid,
   ): Promise<number[]> {
     let totalCSPerMinute = 0;
     let totalVisionScore = 0;
+
     for (const matchId of matchIdList) {
       const match = await this.getMatchFromMatchId(matchId, summonerRegion);
       const matchInfo = match.info;
       const totalMinutes = matchInfo.gameDuration / 60;
       const matchParticipants = matchInfo.participants;
+
       const summonerMatchInfo = matchParticipants.find(
         (participant) => participant.puuid === summonerPuuid,
       );
+
       const avgVision = summonerMatchInfo.challenges.visionScorePerMinute;
       const csPerMinute = summonerMatchInfo.totalMinionsKilled / totalMinutes;
+
       totalCSPerMinute += csPerMinute;
       totalVisionScore += avgVision;
     }
+
     return [
       totalCSPerMinute / matchIdList.length,
       totalVisionScore / matchIdList.length,
@@ -317,6 +325,7 @@ export class LolService {
     queueId: number = 0,
   ): Promise<string[]> {
     let queueStr = '';
+
     if (queueId != 0) {
       queueStr = `&queue=${queueId}`;
     }

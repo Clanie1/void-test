@@ -10,6 +10,7 @@ export enum SummonerSpell {
   PoroToss = 31,
   Smite = 11,
   Teleport = 12,
+  Unknown = 0,
 }
 
 export type SummonerSpellName =
