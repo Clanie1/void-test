@@ -7,15 +7,16 @@ Instructions to run the project:
 
 1. Clone the repository.
 2. Set your own RIOT_API_KEY as an environment variable.
-3. Run the yarn command.
-4. Start the Docker Compose container.
+3. Run the `yarn install` command.
+4. Run `ducker-compose up`.
 5. Run `yarn start:dev`.
 
 The project is an API with four endpoints that are connected to the Riot API. By using the Docker container, you can create a database instance that is automatically populated with tables created by TypeORM entities specified in the code.
 
 For the leaderboard endpoint, the "summoner_rank_record" table in the database stores relevant user information. If a user instance already exists, the information is updated. Table structure:
 
-`export class SummonerRankRecord {
+```javascript
+export class SummonerRankRecord {
   @PrimaryGeneratedColumn()
   id: number;
   @Column()
@@ -30,7 +31,8 @@ For the leaderboard endpoint, the "summoner_rank_record" table in the database s
   winrate: number;
   @Column()
   leaguePoints: number;
-}`
+}
+```
 
 
 The API implements a simple caching technique where query results are stored in memory for 5 seconds. If the server receives the same request within that timeframe, the API returns the stored information.
