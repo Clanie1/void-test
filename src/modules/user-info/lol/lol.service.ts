@@ -91,12 +91,25 @@ export class LolService {
       summonerPlatform,
     );
     this.handleSummonerRankRecordIntoDb(summonerName, summonerPlatform);
-
     const summonerID = accountInfo.id;
-    const summonerRanks = await this.getSummonerRankFromSummonerID(
+    let summonerRanks = await this.getSummonerRankFromSummonerID(
       summonerID,
       summonerPlatform,
     );
+
+    const queueStringType = this.getQueueTypeFromId(queueId);
+    if (queueStringType != 'ALL') {
+      summonerRanks = [
+        summonerRanks.find((rank) => rank.queueType === queueStringType),
+      ];
+      if (!summonerRanks[0]) {
+        throw new HttpException(
+          'No games on queue found',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+    }
+
     const summonerPuuid = accountInfo.puuid;
     const summonerRegion = this.getRegionFromPlatform(summonerPlatform);
     const defaultPaginationForProfileSummary = [1, 5];
@@ -363,6 +376,26 @@ export class LolService {
         return 'Unknown';
     }
   }
+
+  getQueueTypeFromId(queueId: number): string {
+    switch (queueId) {
+      case 420:
+        return 'RANKED_SOLO_5x5';
+      case 440:
+        return 'RANKED_FLEX_SR';
+      case 430:
+        return 'NORMAL_BLIND_PICK';
+      case 400:
+        return 'NORMAL_DRAFT_PICK';
+      case 450:
+        return 'ARAM';
+      case 0:
+        return 'ALL';
+      default:
+        return 'Unknown';
+    }
+  }
+
   getSummonerSpellNameFromId(summonerId: SummonerSpellID): SummonerSpellName {
     switch (summonerId) {
       case SummonerSpell.Barrier:

@@ -50,7 +50,7 @@ export type Platform =
 
 export type Region = 'AMERICAS' | 'EUROPE' | 'ASIA' | 'SEA' | 'Unknown';
 
-export type QueueId = 420 | 440 | 430 | 400 | 450 | 0;
+export type QueueId = '420' | '440' | '430' | '400' | '450' | '0';
 
 export type Tier =
   | 'IRON'

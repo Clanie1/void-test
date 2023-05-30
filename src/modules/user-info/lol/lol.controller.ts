@@ -29,12 +29,13 @@ export class LolController {
   ): Promise<Match[]> {
     const limitNumber = parseInt(limit);
     const pageNumber = parseInt(page);
+    const queueIdNumber = parseInt(queueId);
     return this.lolService.getAccountRecentMatches(
       summonerName,
       summonerPlatform,
       pageNumber,
       limitNumber,
-      queueId,
+      queueIdNumber,
     );
   }
 
@@ -44,10 +45,11 @@ export class LolController {
     @Param('summonerPlatform') summonerPlatform: Platform,
     @Query('queueId') queueId: QueueId,
   ): Promise<PlayerSummary[]> {
+    const queueIdNumber = parseInt(queueId);
     return this.lolService.getPlayerSummary(
       summonerName,
       summonerPlatform,
-      queueId,
+      queueIdNumber,
     );
   }
 
