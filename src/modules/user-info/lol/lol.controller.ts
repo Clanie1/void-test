@@ -11,9 +11,7 @@ import { LolService } from './lol.service';
 import { Platform, QueueId } from './types/lol.internal-types';
 import { Match, PlayerSummary } from './types/lol.network-types';
 import { Response } from 'express';
-import * as fs from 'fs';
 import * as path from 'path';
-import { get } from 'http';
 import { of } from 'rxjs';
 
 @UseInterceptors(CacheInterceptor)

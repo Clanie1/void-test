@@ -7,12 +7,7 @@ import { summonerRankRecordProviders } from './lol/entities/summonerRankRecord.p
 @Module({
   imports: [],
   controllers: [LolController],
-  providers: [
-    LolService,
-    ...databaseProviders,
-    LolService,
-    ...summonerRankRecordProviders,
-  ],
+  providers: [...databaseProviders, LolService, ...summonerRankRecordProviders],
   exports: [...databaseProviders],
 })
 export class UserInfoModule {}
