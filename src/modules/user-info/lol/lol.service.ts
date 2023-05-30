@@ -107,8 +107,15 @@ export class LolService {
       queueId,
     );
 
-    const avgCsPerMinute = this.getAvgCSPerMinute(matchList);
-    const avgVisionScore = this.getAvgVisionScore(matchList);
+    const [avgCsPerMinute, avgVisionScore] = await this.getAvgCSPerMinute(
+      matchList,
+      summonerRegion,
+      summonerPuuid,
+    );
+    // const avgVisionScore = await this.getAvgVisionScore(
+    //   matchList,
+    //   summonerRegion,
+    // );
 
     let summonerRanksFiltered = [];
     for (const rankDetails of summonerRanks) {
@@ -233,20 +240,38 @@ export class LolService {
     );
   }
 
-  getAvgCSPerMinute(matchList): number {
+  async getAvgCSPerMinute(
+    matchIdList,
+    summonerRegion,
+    summonerPuuid,
+  ): Promise<number[]> {
     let totalCSPerMinute = 0;
-    for (const match of matchList) {
-      totalCSPerMinute += match.csPerMinute;
+    let totalVisionScore = 0;
+    for (const matchId of matchIdList) {
+      const match = await this.getMatchFromMatchId(matchId, summonerRegion);
+      const matchInfo = match.info;
+      const totalMinutes = matchInfo.gameDuration / 60;
+      const matchParticipants = matchInfo.participants;
+      const summonerMatchInfo = matchParticipants.find(
+        (participant) => participant.puuid === summonerPuuid,
+      );
+      const avgVision = summonerMatchInfo.challenges.visionScorePerMinute;
+      const csPerMinute = summonerMatchInfo.totalMinionsKilled / totalMinutes;
+      totalCSPerMinute += csPerMinute;
+      totalVisionScore += avgVision;
     }
-    return totalCSPerMinute / matchList.length;
+    return [
+      totalCSPerMinute / matchIdList.length,
+      totalVisionScore / matchIdList.length,
+    ];
   }
 
-  getAvgVisionScore(matchList): number {
+  async getAvgVisionScore(matchIdList, summonerRegion): Promise<number> {
     let totalVisionScore = 0;
-    for (const match of matchList) {
+    for (const match of matchIdList) {
       totalVisionScore += match.avgVision;
     }
-    return totalVisionScore / matchList.length;
+    return totalVisionScore / matchIdList.length;
   }
 
   async getSummonerRankFromSummonerID(
@@ -259,7 +284,7 @@ export class LolService {
     return summonerRank.data;
   }
 
-  async getMatchFromMatchId(matchId: string, summonerRegion: string) {
+  async getMatchFromMatchId(matchId: string, summonerRegion: Region) {
     try {
       const match = await this.riotAxios.get(
         `https://${summonerRegion}.api.riotgames.com/lol/match/v5/matches/${matchId}`,
